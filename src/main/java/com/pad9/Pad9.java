@@ -15,6 +15,9 @@ public class Pad9 {
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();
             frame.setVisible(true);
+            for (String arg : args) {
+                frame.openFile(new java.io.File(arg));
+            }
         });
     }
 }

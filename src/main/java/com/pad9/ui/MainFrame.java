@@ -101,9 +101,34 @@ public class MainFrame extends JFrame {
         fileMenu.addSeparator();
         fileMenu.add(closeTabItem);
 
+        fileMenu.addSeparator();
+        JMenuItem exitItem = new JMenuItem("Exit");
+        exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, shortcutMask));
+        exitItem.addActionListener(e -> handleExit());
+        fileMenu.add(exitItem);
+
         menuBar.add(fileMenu);
 
         JMenu editMenu = new JMenu("Edit");
+
+        JMenuItem undoItem = new JMenuItem("Undo");
+        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcutMask));
+        undoItem.addActionListener(e -> {
+            EditorPane ep = tabPane.getCurrentEditor();
+            if (ep != null && ep.getTextArea().canUndo()) ep.getTextArea().undoLastAction();
+        });
+
+        JMenuItem redoItem = new JMenuItem("Redo");
+        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,
+                shortcutMask | KeyEvent.SHIFT_DOWN_MASK));
+        redoItem.addActionListener(e -> {
+            EditorPane ep = tabPane.getCurrentEditor();
+            if (ep != null && ep.getTextArea().canRedo()) ep.getTextArea().redoLastAction();
+        });
+
+        editMenu.add(undoItem);
+        editMenu.add(redoItem);
+        editMenu.addSeparator();
 
         JMenuItem findItem = new JMenuItem("Find...");
         findItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcutMask));

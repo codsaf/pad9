@@ -1,8 +1,10 @@
 package com.pad9.ui;
 
 import com.pad9.core.SyntaxMapper;
+import com.pad9.util.FontUtil;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
@@ -10,6 +12,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -32,6 +35,16 @@ public class EditorPane extends JPanel {
         textArea.setAntiAliasingEnabled(true);
         textArea.setTabSize(4);
         textArea.setTabsEmulated(true);
+
+        try {
+            Theme theme = Theme.load(
+                    getClass().getResourceAsStream("/org/fife/ui/rsyntaxtextarea/themes/dark.xml"));
+            theme.apply(textArea);
+        } catch (IOException e) {
+            // Fallback to default theme if dark theme can't be loaded
+        }
+
+        textArea.setFont(FontUtil.getEditorFont(14));
 
         scrollPane = new RTextScrollPane(textArea);
         scrollPane.setLineNumbersEnabled(true);
