@@ -26,7 +26,6 @@ dependencies {
 tasks.named<JavaExec>("run") {
     jvmArgs = listOf(
         "-XX:+UseZGC",
-        "-XX:+ZGenerational",
         "-XX:SoftMaxHeapSize=256m",
         "-XX:+UseStringDeduplication"
     )
