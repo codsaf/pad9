@@ -19,6 +19,7 @@ public class MainFrame extends JFrame {
 
     private final EditorTabPane tabPane;
     private final StatusBar statusBar;
+    private final SearchReplaceBar searchReplaceBar;
     private final JFileChooser fileChooser = new JFileChooser();
 
     /**
@@ -35,7 +36,11 @@ public class MainFrame extends JFrame {
         add(tabPane, BorderLayout.CENTER);
 
         statusBar = new StatusBar();
-        add(statusBar, BorderLayout.SOUTH);
+        searchReplaceBar = new SearchReplaceBar();
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(searchReplaceBar, BorderLayout.NORTH);
+        bottomPanel.add(statusBar, BorderLayout.SOUTH);
+        add(bottomPanel, BorderLayout.SOUTH);
 
         tabPane.addPropertyChangeListener("saveRequested", evt -> {
             if (evt.getNewValue() instanceof EditorPane editor) {
@@ -97,6 +102,27 @@ public class MainFrame extends JFrame {
         fileMenu.add(closeTabItem);
 
         menuBar.add(fileMenu);
+
+        JMenu editMenu = new JMenu("Edit");
+
+        JMenuItem findItem = new JMenuItem("Find...");
+        findItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcutMask));
+        findItem.addActionListener(e -> {
+            EditorPane ep = tabPane.getCurrentEditor();
+            if (ep != null) searchReplaceBar.showFind(ep.getTextArea());
+        });
+
+        JMenuItem replaceItem = new JMenuItem("Replace...");
+        replaceItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, shortcutMask));
+        replaceItem.addActionListener(e -> {
+            EditorPane ep = tabPane.getCurrentEditor();
+            if (ep != null) searchReplaceBar.showFindReplace(ep.getTextArea());
+        });
+
+        editMenu.add(findItem);
+        editMenu.add(replaceItem);
+        menuBar.add(editMenu);
+
         return menuBar;
     }
 
