@@ -18,6 +18,7 @@ import java.io.IOException;
 public class MainFrame extends JFrame {
 
     private final EditorTabPane tabPane;
+    private final StatusBar statusBar;
     private final JFileChooser fileChooser = new JFileChooser();
 
     /**
@@ -30,8 +31,11 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
 
         tabPane = new EditorTabPane();
-        tabPane.addNewTab();
+        EditorPane initialEditor = tabPane.addNewTab();
         add(tabPane, BorderLayout.CENTER);
+
+        statusBar = new StatusBar();
+        add(statusBar, BorderLayout.SOUTH);
 
         tabPane.addPropertyChangeListener("saveRequested", evt -> {
             if (evt.getNewValue() instanceof EditorPane editor) {
@@ -39,7 +43,11 @@ public class MainFrame extends JFrame {
             }
         });
 
-        tabPane.addChangeListener(e -> updateTitle());
+        tabPane.addChangeListener(e -> {
+            updateTitle();
+            EditorPane editor = tabPane.getCurrentEditor();
+            if (editor != null) wireStatusBar(editor);
+        });
 
         setJMenuBar(createMenuBar());
 
@@ -49,6 +57,8 @@ public class MainFrame extends JFrame {
                 handleExit();
             }
         });
+
+        wireStatusBar(initialEditor);
     }
 
     private JMenuBar createMenuBar() {
@@ -113,6 +123,7 @@ public class MainFrame extends JFrame {
                     editor.clearModified();
                     tabPane.addTab(editor);
                     updateTitle();
+                    wireStatusBar(editor);
                 });
             } catch (IOException ex) {
                 SwingUtilities.invokeLater(() ->
@@ -194,6 +205,17 @@ public class MainFrame extends JFrame {
         }
         dispose();
         System.exit(0);
+    }
+
+    private void wireStatusBar(EditorPane editor) {
+        editor.getTextArea().addCaretListener(e -> {
+            int line = editor.getTextArea().getCaretLineNumber() + 1;
+            int col = editor.getTextArea().getCaretOffsetFromLineStart() + 1;
+            statusBar.updatePosition(line, col);
+        });
+        statusBar.updateEncoding(editor.getCharset().displayName());
+        statusBar.updateLanguage(editor.getLanguageName());
+        statusBar.updateFileSize(editor.getFile());
     }
 
     /**
