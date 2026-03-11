@@ -12,6 +12,7 @@ import com.google.gson.*;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class MainFrame extends JFrame {
     private final StatusBar statusBar;
     private final SearchReplaceBar searchReplaceBar;
     private JFileChooser fileChooser;
+    private EditorPane previousEditor;
     private javax.swing.event.CaretListener currentCaretListener;
 
     /**
@@ -262,11 +264,11 @@ public class MainFrame extends JFrame {
             editor.setFile(file);
         }
         File targetFile = file;
+        String content = editor.getTextArea().getText();
+        Charset cs = editor.getCharset();
         Thread.startVirtualThread(() -> {
             try {
-                FileManager.write(targetFile.toPath(),
-                        editor.getTextArea().getText(),
-                        editor.getCharset());
+                FileManager.write(targetFile.toPath(), content, cs);
                 SwingUtilities.invokeLater(() -> {
                     editor.clearModified();
                     updateTitle();
@@ -290,24 +292,27 @@ public class MainFrame extends JFrame {
     }
 
     private void handleExit() {
+        List<EditorPane> unsaved = new ArrayList<>();
         for (int i = 0; i < tabPane.getTabCount(); i++) {
-            Component comp = tabPane.getComponentAt(i);
-            if (comp instanceof EditorPane editor && editor.isModified()) {
-                int choice = JOptionPane.showConfirmDialog(this,
-                        "There are unsaved changes. Save before exit?",
-                        "Unsaved Changes",
-                        JOptionPane.YES_NO_CANCEL_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-                if (choice == JOptionPane.CANCEL_OPTION) return;
-                if (choice == JOptionPane.YES_OPTION) {
-                    for (int j = 0; j < tabPane.getTabCount(); j++) {
-                        Component c = tabPane.getComponentAt(j);
-                        if (c instanceof EditorPane ep && ep.isModified()) {
-                            saveEditor(ep);
-                        }
-                    }
+            if (tabPane.getComponentAt(i) instanceof EditorPane ep && ep.isModified()) {
+                unsaved.add(ep);
+            }
+        }
+        if (!unsaved.isEmpty()) {
+            int choice = JOptionPane.showConfirmDialog(this,
+                    "There are unsaved changes. Save before exit?",
+                    "Unsaved Changes",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (choice == JOptionPane.CANCEL_OPTION) return;
+            if (choice == JOptionPane.YES_OPTION) {
+                for (EditorPane ep : unsaved) {
+                    File file = ep.getFile();
+                    if (file == null) continue;
+                    try {
+                        FileManager.write(file.toPath(), ep.getTextArea().getText(), ep.getCharset());
+                    } catch (IOException ignored) {}
                 }
-                break;
             }
         }
         dispose();
@@ -315,11 +320,8 @@ public class MainFrame extends JFrame {
     }
 
     private void wireStatusBar(EditorPane editor) {
-        if (currentCaretListener != null) {
-            EditorPane prev = tabPane.getCurrentEditor();
-            if (prev != null) {
-                prev.getTextArea().removeCaretListener(currentCaretListener);
-            }
+        if (currentCaretListener != null && previousEditor != null) {
+            previousEditor.getTextArea().removeCaretListener(currentCaretListener);
         }
         currentCaretListener = e -> {
             int line = editor.getTextArea().getCaretLineNumber() + 1;
@@ -327,6 +329,7 @@ public class MainFrame extends JFrame {
             statusBar.updatePosition(line, col);
         };
         editor.getTextArea().addCaretListener(currentCaretListener);
+        previousEditor = editor;
         statusBar.updateEncoding(editor.getCharset().displayName());
         statusBar.updateLanguage(editor.getLanguageName());
         statusBar.updateFileSize(editor.getFile());

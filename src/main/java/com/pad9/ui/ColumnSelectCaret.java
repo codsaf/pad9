@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.List;
 public class ColumnSelectCaret extends ConfigurableCaret {
 
     private boolean columnMode;
-    private int anchorLine;
-    private int anchorCol;
+    private int anchorLine, anchorCol;
+    private int lastStartLine = -1, lastEndLine, lastStartCol, lastEndCol;
     private final List<Object> highlightTags = new ArrayList<>();
+    private Highlighter.HighlightPainter cachedPainter;
+    private Color cachedSelectionColor;
     private String rectangularText;
 
     @Override
@@ -66,10 +69,24 @@ public class ColumnSelectCaret extends ConfigurableCaret {
             int startCol = Math.min(anchorCol, curCol);
             int endCol = Math.max(anchorCol, curCol);
 
+            // Skip if selection bounds unchanged
+            if (startLine == lastStartLine && endLine == lastEndLine
+                    && startCol == lastStartCol && endCol == lastEndCol) {
+                e.consume();
+                return;
+            }
+            lastStartLine = startLine; lastEndLine = endLine;
+            lastStartCol = startCol; lastEndCol = endCol;
+
             clearHighlights();
 
+            Color selColor = ta.getSelectionColor();
+            if (cachedPainter == null || !selColor.equals(cachedSelectionColor)) {
+                cachedPainter = new DefaultHighlighter.DefaultHighlightPainter(selColor);
+                cachedSelectionColor = selColor;
+            }
+
             Highlighter h = ta.getHighlighter();
-            var painter = new DefaultHighlighter.DefaultHighlightPainter(ta.getSelectionColor());
             StringBuilder sb = new StringBuilder();
 
             for (int line = startLine; line <= endLine; line++) {
@@ -82,13 +99,14 @@ public class ColumnSelectCaret extends ConfigurableCaret {
 
                 if (sb.length() > 0) sb.append('\n');
                 if (from < to) {
-                    highlightTags.add(h.addHighlight(from, to, painter));
+                    highlightTags.add(h.addHighlight(from, to, cachedPainter));
                     sb.append(ta.getText(from, to - from));
                 }
             }
             rectangularText = sb.toString();
         } catch (BadLocationException ex) {
-            // ignore
+            clearHighlights();
+            rectangularText = null;
         }
         e.consume();
     }
@@ -123,6 +141,7 @@ public class ColumnSelectCaret extends ConfigurableCaret {
     public void clearColumnSelection() {
         clearHighlights();
         rectangularText = null;
+        lastStartLine = -1;
     }
 
     private void clearHighlights() {

@@ -40,19 +40,20 @@ jobs:
       - name: Generate macOS icon
         if: runner.os == 'macOS'
         run: |
-          ICONDIR=src/main/resources/icons
-          ICONSET="$ICONDIR/icon.iconset"
+          SRCDIR=src/main/resources/icons
+          OUTDIR=packaging/icons
+          ICONSET="$OUTDIR/icon.iconset"
           mkdir -p "$ICONSET"
-          cp "$ICONDIR/icon-16.png"  "$ICONSET/icon_16x16.png"
-          cp "$ICONDIR/icon-32.png"  "$ICONSET/icon_16x16@2x.png"
-          cp "$ICONDIR/icon-32.png"  "$ICONSET/icon_32x32.png"
-          cp "$ICONDIR/icon-128.png" "$ICONSET/icon_32x32@2x.png"
-          cp "$ICONDIR/icon-128.png" "$ICONSET/icon_128x128.png"
-          cp "$ICONDIR/icon-256.png" "$ICONSET/icon_128x128@2x.png"
-          cp "$ICONDIR/icon-256.png" "$ICONSET/icon_256x256.png"
-          cp "$ICONDIR/icon-512.png" "$ICONSET/icon_256x256@2x.png"
-          cp "$ICONDIR/icon-512.png" "$ICONSET/icon_512x512.png"
-          iconutil -c icns -o "$ICONDIR/icon.icns" "$ICONSET"
+          cp "$SRCDIR/icon-16.png"  "$ICONSET/icon_16x16.png"
+          cp "$SRCDIR/icon-32.png"  "$ICONSET/icon_16x16@2x.png"
+          cp "$SRCDIR/icon-32.png"  "$ICONSET/icon_32x32.png"
+          cp "$SRCDIR/icon-128.png" "$ICONSET/icon_32x32@2x.png"
+          cp "$SRCDIR/icon-128.png" "$ICONSET/icon_128x128.png"
+          cp "$SRCDIR/icon-256.png" "$ICONSET/icon_128x128@2x.png"
+          cp "$SRCDIR/icon-256.png" "$ICONSET/icon_256x256.png"
+          cp "$OUTDIR/icon-512.png" "$ICONSET/icon_256x256@2x.png"
+          cp "$OUTDIR/icon-512.png" "$ICONSET/icon_512x512.png"
+          iconutil -c icns -o "$OUTDIR/icon.icns" "$ICONSET"
           rm -rf "$ICONSET"
 
       - name: Build app image

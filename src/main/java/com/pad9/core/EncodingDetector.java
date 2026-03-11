@@ -1,12 +1,11 @@
 package com.pad9.core;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
 /**
  * Detects file encoding by checking BOM, validating UTF-8,
@@ -29,25 +28,19 @@ public final class EncodingDetector {
      * @throws IOException if the file cannot be read
      */
     public static Charset detect(Path path) throws IOException {
-        try (FileChannel ch = FileChannel.open(path, StandardOpenOption.READ)) {
-            long size = ch.size();
-            if (size == 0) return StandardCharsets.UTF_8;
-
-            int readSize = (int) Math.min(size, PROBE_SIZE);
-            ByteBuffer buf = ByteBuffer.allocate(readSize);
-            ch.read(buf);
-            buf.flip();
-            byte[] bytes = new byte[buf.remaining()];
-            buf.get(bytes);
-
-            Charset bomCharset = detectBOM(bytes);
-            if (bomCharset != null) return bomCharset;
-            if (isValidUTF8(bytes)) return StandardCharsets.UTF_8;
-            if (looksLikeGBK(bytes)) return Charset.forName("GBK");
-            if (looksLikeShiftJIS(bytes)) return Charset.forName("Shift_JIS");
-            if (looksLikeEUCKR(bytes)) return Charset.forName("EUC-KR");
-            return StandardCharsets.ISO_8859_1;
+        byte[] bytes;
+        try (InputStream in = Files.newInputStream(path)) {
+            bytes = in.readNBytes(PROBE_SIZE);
         }
+        if (bytes.length == 0) return StandardCharsets.UTF_8;
+
+        Charset bomCharset = detectBOM(bytes);
+        if (bomCharset != null) return bomCharset;
+        if (isValidUTF8(bytes)) return StandardCharsets.UTF_8;
+        if (looksLikeGBK(bytes)) return Charset.forName("GBK");
+        if (looksLikeShiftJIS(bytes)) return Charset.forName("Shift_JIS");
+        if (looksLikeEUCKR(bytes)) return Charset.forName("EUC-KR");
+        return StandardCharsets.ISO_8859_1;
     }
 
     private static Charset detectBOM(byte[] bytes) {
@@ -72,6 +65,7 @@ public final class EncodingDetector {
             else if (b >= 0xE0 && b <= 0xEF) remaining = 2;
             else if (b >= 0xF0 && b <= 0xF4) remaining = 3;
             else return false;
+            // Incomplete sequence at end of probe buffer — assume valid (truncated)
             if (i + remaining >= bytes.length) return true;
             for (int j = 1; j <= remaining; j++) {
                 if ((bytes[i + j] & 0xC0) != 0x80) return false;
@@ -81,39 +75,52 @@ public final class EncodingDetector {
         return true;
     }
 
-    private static boolean looksLikeGBK(byte[] bytes) {
+    /**
+     * Generic double-byte encoding heuristic. Counts valid lead+trail byte
+     * pairs vs. invalid sequences. Returns true if enough valid pairs found.
+     */
+    private static boolean looksLikeDoubleByte(byte[] bytes, BytePairChecker checker) {
         int pairs = 0, invalid = 0;
         for (int i = 0; i < bytes.length - 1; i++) {
             int b1 = bytes[i] & 0xFF, b2 = bytes[i + 1] & 0xFF;
-            if (b1 >= 0x81 && b1 <= 0xFE) {
-                if ((b2 >= 0x40 && b2 <= 0x7E) || (b2 >= 0x80 && b2 <= 0xFE)) { pairs++; i++; }
-                else invalid++;
-            }
+            int result = checker.check(b1, b2);
+            if (result > 0) { pairs += result; i++; }
+            else if (result < 0) invalid++;
         }
         return pairs > 0 && invalid <= pairs / 10;
+    }
+
+    @FunctionalInterface
+    private interface BytePairChecker {
+        /** Returns >0 for valid pair (skip trail byte), <0 for invalid lead, 0 for non-lead byte. */
+        int check(int b1, int b2);
+    }
+
+    private static boolean looksLikeGBK(byte[] bytes) {
+        return looksLikeDoubleByte(bytes, (b1, b2) -> {
+            if (b1 >= 0x81 && b1 <= 0xFE) {
+                return ((b2 >= 0x40 && b2 <= 0x7E) || (b2 >= 0x80 && b2 <= 0xFE)) ? 1 : -1;
+            }
+            return 0;
+        });
     }
 
     private static boolean looksLikeShiftJIS(byte[] bytes) {
-        int pairs = 0, invalid = 0;
-        for (int i = 0; i < bytes.length - 1; i++) {
-            int b1 = bytes[i] & 0xFF, b2 = bytes[i + 1] & 0xFF;
+        return looksLikeDoubleByte(bytes, (b1, b2) -> {
             if ((b1 >= 0x81 && b1 <= 0x9F) || (b1 >= 0xE0 && b1 <= 0xEF)) {
-                if ((b2 >= 0x40 && b2 <= 0x7E) || (b2 >= 0x80 && b2 <= 0xFC)) { pairs++; i++; }
-                else invalid++;
-            } else if (b1 >= 0xA1 && b1 <= 0xDF) pairs++;
-        }
-        return pairs > 0 && invalid <= pairs / 10;
+                return ((b2 >= 0x40 && b2 <= 0x7E) || (b2 >= 0x80 && b2 <= 0xFC)) ? 1 : -1;
+            }
+            if (b1 >= 0xA1 && b1 <= 0xDF) return 1; // half-width katakana
+            return 0;
+        });
     }
 
     private static boolean looksLikeEUCKR(byte[] bytes) {
-        int pairs = 0, invalid = 0;
-        for (int i = 0; i < bytes.length - 1; i++) {
-            int b1 = bytes[i] & 0xFF, b2 = bytes[i + 1] & 0xFF;
+        return looksLikeDoubleByte(bytes, (b1, b2) -> {
             if (b1 >= 0xA1 && b1 <= 0xFE) {
-                if (b2 >= 0xA1 && b2 <= 0xFE) { pairs++; i++; }
-                else invalid++;
+                return (b2 >= 0xA1 && b2 <= 0xFE) ? 1 : -1;
             }
-        }
-        return pairs > 0 && invalid <= pairs / 10;
+            return 0;
+        });
     }
 }

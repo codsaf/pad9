@@ -42,28 +42,6 @@ public final class FileManager {
         Files.writeString(path, content, charset);
     }
 
-    /**
-     * Result of reading a file, containing the decoded text and the detected charset.
-     */
-    public static class ReadResult {
-        private final String content;
-        private final Charset charset;
-
-        /**
-         * Creates a new ReadResult.
-         *
-         * @param content the decoded file content
-         * @param charset the detected charset
-         */
-        public ReadResult(String content, Charset charset) {
-            this.content = content;
-            this.charset = charset;
-        }
-
-        /** Returns the decoded file content. */
-        public String content() { return content; }
-
-        /** Returns the detected charset. */
-        public Charset charset() { return charset; }
-    }
+    /** Result of reading a file, containing the decoded text and the detected charset. */
+    public record ReadResult(String content, Charset charset) {}
 }

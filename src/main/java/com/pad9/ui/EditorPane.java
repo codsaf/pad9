@@ -21,6 +21,14 @@ import java.nio.charset.StandardCharsets;
 
 public class EditorPane extends JPanel {
 
+    private static Theme darkTheme;
+    static {
+        try {
+            darkTheme = Theme.load(
+                    EditorPane.class.getResourceAsStream("/org/fife/ui/rsyntaxtextarea/themes/dark.xml"));
+        } catch (IOException ignored) {}
+    }
+
     private final RSyntaxTextArea textArea;
     private final RTextScrollPane scrollPane;
     private File file;
@@ -40,13 +48,7 @@ public class EditorPane extends JPanel {
         textArea.setTabSize(4);
         textArea.setTabsEmulated(true);
 
-        try {
-            Theme theme = Theme.load(
-                    getClass().getResourceAsStream("/org/fife/ui/rsyntaxtextarea/themes/dark.xml"));
-            theme.apply(textArea);
-        } catch (IOException e) {
-            // Fallback to default theme if dark theme can't be loaded
-        }
+        if (darkTheme != null) darkTheme.apply(textArea);
 
         textArea.setFont(FontUtil.getEditorFont(14));
 

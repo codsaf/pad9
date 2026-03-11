@@ -20,7 +20,9 @@ repositories {
 dependencies {
     implementation("com.formdev:flatlaf:3.4")
     implementation("com.fifesoft:rsyntaxtextarea:3.4.1")
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.google.code.gson:gson:2.11.0") {
+        exclude(group = "com.google.errorprone")
+    }
 }
 
 tasks.named<JavaExec>("run") {
@@ -83,7 +85,7 @@ tasks.register("packageDist") {
 
         // Step 2: jpackage — create app image with native .exe launcher
         val jarName = tasks.named<Jar>("jar").get().archiveFileName.get()
-        val iconResDir = project.file("src/main/resources/icons")
+        val iconResDir = project.file("packaging/icons")
         val iconExt = if (isWindows) "ico" else if (isMac) "icns" else "png"
         val iconFile = File(iconResDir, "icon.$iconExt")
         val jpackageArgs = mutableListOf(

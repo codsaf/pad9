@@ -78,26 +78,16 @@ public class SearchReplaceBar extends JPanel {
         // Enter in search field triggers find next
         searchField.addActionListener(e -> findNext(true));
 
-        // Escape closes the bar (for both search and replace fields)
-        InputMap im = searchField.getInputMap(JComponent.WHEN_FOCUSED);
-        ActionMap am = searchField.getActionMap();
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "close");
-        am.put("close", new AbstractAction() {
+        // Escape closes the bar
+        Action dismissAction = new AbstractAction() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                dismiss();
-            }
-        });
-
-        InputMap rim = replaceField.getInputMap(JComponent.WHEN_FOCUSED);
-        ActionMap ram = replaceField.getActionMap();
-        rim.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "close");
-        ram.put("close", new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                dismiss();
-            }
-        });
+            public void actionPerformed(java.awt.event.ActionEvent e) { dismiss(); }
+        };
+        KeyStroke esc = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        for (JTextField field : new JTextField[]{searchField, replaceField}) {
+            field.getInputMap(JComponent.WHEN_FOCUSED).put(esc, "close");
+            field.getActionMap().put("close", dismissAction);
+        }
     }
 
     /**
@@ -105,22 +95,18 @@ public class SearchReplaceBar extends JPanel {
      *
      * @param textArea the text area to search within
      */
-    public void showFind(RSyntaxTextArea textArea) {
-        this.currentTextArea = textArea;
-        replacePanel.setVisible(false);
-        setVisible(true);
-        searchField.requestFocusInWindow();
-        searchField.selectAll();
-    }
+    public void showFind(RSyntaxTextArea textArea) { show(textArea, false); }
 
     /**
      * Shows the search bar in find and replace mode.
      *
      * @param textArea the text area to search and replace within
      */
-    public void showFindReplace(RSyntaxTextArea textArea) {
+    public void showFindReplace(RSyntaxTextArea textArea) { show(textArea, true); }
+
+    private void show(RSyntaxTextArea textArea, boolean showReplace) {
         this.currentTextArea = textArea;
-        replacePanel.setVisible(true);
+        replacePanel.setVisible(showReplace);
         setVisible(true);
         searchField.requestFocusInWindow();
         searchField.selectAll();
