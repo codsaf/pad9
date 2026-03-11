@@ -18,14 +18,16 @@ public class EditorTabPane extends JTabbedPane {
 
         JButton addButton = new JButton("+");
         addButton.setFont(addButton.getFont().deriveFont(Font.BOLD, 16f));
-        addButton.setBorderPainted(false);
-        addButton.setContentAreaFilled(false);
-        addButton.setFocusPainted(false);
+        addButton.putClientProperty("JButton.buttonType", "toolBarButton");
+        addButton.setFocusable(false);
         addButton.setMargin(new Insets(0, 6, 0, 6));
         addButton.setToolTipText("New Tab");
         addButton.addActionListener(e -> addNewTab());
 
-        putClientProperty("JTabbedPane.trailingComponent", addButton);
+        JPanel trailing = new JPanel(new BorderLayout());
+        trailing.setOpaque(false);
+        trailing.add(addButton, BorderLayout.EAST);
+        putClientProperty("JTabbedPane.trailingComponent", trailing);
     }
 
     /**
@@ -125,9 +127,8 @@ public class EditorTabPane extends JTabbedPane {
 
         JButton closeButton = new JButton("\u00d7");
         closeButton.setFont(closeButton.getFont().deriveFont(14f));
-        closeButton.setBorderPainted(false);
-        closeButton.setContentAreaFilled(false);
-        closeButton.setFocusPainted(false);
+        closeButton.putClientProperty("JButton.buttonType", "toolBarButton");
+        closeButton.setFocusable(false);
         closeButton.setMargin(new Insets(0, 2, 0, 2));
         closeButton.addActionListener(e -> closeTab(editor));
         panel.add(closeButton);
