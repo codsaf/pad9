@@ -7,8 +7,16 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The main application window for Pad9.
@@ -30,6 +38,7 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
+        loadIcons();
 
         tabPane = new EditorTabPane();
         EditorPane initialEditor = tabPane.addNewTab();
@@ -146,9 +155,50 @@ public class MainFrame extends JFrame {
 
         editMenu.add(findItem);
         editMenu.add(replaceItem);
+        editMenu.addSeparator();
+
+        JMenuItem formatJsonItem = new JMenuItem("Format JSON");
+        formatJsonItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
+                shortcutMask | KeyEvent.SHIFT_DOWN_MASK));
+        formatJsonItem.addActionListener(e -> formatJson());
+        editMenu.add(formatJsonItem);
+
         menuBar.add(editMenu);
 
         return menuBar;
+    }
+
+    private void loadIcons() {
+        int[] sizes = {16, 32, 48, 128, 256};
+        List<Image> icons = new ArrayList<>();
+        for (int s : sizes) {
+            try {
+                var stream = getClass().getResourceAsStream("/icons/icon-" + s + ".png");
+                if (stream != null) icons.add(ImageIO.read(stream));
+            } catch (IOException ignored) {}
+        }
+        if (!icons.isEmpty()) setIconImages(icons);
+    }
+
+    private void formatJson() {
+        EditorPane editor = tabPane.getCurrentEditor();
+        if (editor == null) return;
+        String text = editor.getTextArea().getText();
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+            String formatted = gson.toJson(JsonParser.parseString(text));
+            editor.getTextArea().beginAtomicEdit();
+            try {
+                editor.getTextArea().setText(formatted);
+                editor.getTextArea().setCaretPosition(0);
+            } finally {
+                editor.getTextArea().endAtomicEdit();
+            }
+        } catch (JsonSyntaxException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Invalid JSON: " + ex.getMessage(),
+                    "Format Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private JFileChooser getFileChooser() {

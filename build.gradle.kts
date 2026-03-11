@@ -80,21 +80,28 @@ tasks.register("packageDist") {
 
         // Step 2: jpackage — create app image with native .exe launcher
         val jarName = tasks.named<Jar>("jar").get().archiveFileName.get()
+        val iconResDir = project.file("src/main/resources/icons")
+        val iconExt = if (isWindows) "ico" else "png"
+        val iconFile = File(iconResDir, "icon.$iconExt")
+        val jpackageArgs = mutableListOf(
+            File(javaHome, "bin/jpackage$binExt").absolutePath,
+            "--type", "app-image",
+            "--name", "Pad9",
+            "--app-version", "1.0.0",
+            "--input", inputDir.absolutePath,
+            "--main-jar", jarName,
+            "--main-class", "com.pad9.Pad9",
+            "--runtime-image", runtimeDir.absolutePath,
+            "--java-options", "-XX:+UseZGC",
+            "--java-options", "-XX:SoftMaxHeapSize=256m",
+            "--java-options", "-XX:+UseStringDeduplication",
+            "--dest", destDir.absolutePath
+        )
+        if (iconFile.exists()) {
+            jpackageArgs.addAll(listOf("--icon", iconFile.absolutePath))
+        }
         providers.exec {
-            commandLine(
-                File(javaHome, "bin/jpackage$binExt").absolutePath,
-                "--type", "app-image",
-                "--name", "Pad9",
-                "--app-version", "1.0.0",
-                "--input", inputDir.absolutePath,
-                "--main-jar", jarName,
-                "--main-class", "com.pad9.Pad9",
-                "--runtime-image", runtimeDir.absolutePath,
-                "--java-options", "-XX:+UseZGC",
-                "--java-options", "-XX:SoftMaxHeapSize=256m",
-                "--java-options", "-XX:+UseStringDeduplication",
-                "--dest", destDir.absolutePath
-            )
+            commandLine(jpackageArgs)
         }.result.get()
 
         // Clean temp dirs
