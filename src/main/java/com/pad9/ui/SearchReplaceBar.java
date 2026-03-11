@@ -53,7 +53,7 @@ public class SearchReplaceBar extends JPanel {
         JButton closeBtn = new JButton("\u00D7");
         closeBtn.setBorderPainted(false);
         closeBtn.setContentAreaFilled(false);
-        closeBtn.addActionListener(e -> hide());
+        closeBtn.addActionListener(e -> dismiss());
         searchPanel.add(closeBtn);
 
         // Replace row
@@ -85,7 +85,7 @@ public class SearchReplaceBar extends JPanel {
         am.put("close", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-                hide();
+                dismiss();
             }
         });
 
@@ -95,7 +95,7 @@ public class SearchReplaceBar extends JPanel {
         ram.put("close", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-                hide();
+                dismiss();
             }
         });
     }
@@ -127,9 +127,9 @@ public class SearchReplaceBar extends JPanel {
     }
 
     /**
-     * Hides the search bar and returns focus to the editor.
+     * Dismisses the search bar and returns focus to the editor.
      */
-    public void hide() {
+    public void dismiss() {
         setVisible(false);
         if (currentTextArea != null) {
             currentTextArea.requestFocusInWindow();

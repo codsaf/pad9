@@ -5,6 +5,7 @@ import com.pad9.util.FontUtil;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.Theme;
+import org.fife.ui.rtextarea.CaretStyle;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
@@ -33,6 +34,7 @@ public class EditorPane extends JPanel {
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
         textArea.setCodeFoldingEnabled(true);
         textArea.setAntiAliasingEnabled(true);
+        textArea.setFractionalFontMetricsEnabled(false);
         textArea.setTabSize(4);
         textArea.setTabsEmulated(true);
 
@@ -45,6 +47,7 @@ public class EditorPane extends JPanel {
         }
 
         textArea.setFont(FontUtil.getEditorFont(14));
+        textArea.setCaretStyle(RSyntaxTextArea.INSERT_MODE, CaretStyle.VERTICAL_LINE_STYLE);
 
         scrollPane = new RTextScrollPane(textArea);
         scrollPane.setLineNumbersEnabled(true);

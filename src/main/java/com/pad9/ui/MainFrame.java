@@ -20,7 +20,7 @@ public class MainFrame extends JFrame {
     private final EditorTabPane tabPane;
     private final StatusBar statusBar;
     private final SearchReplaceBar searchReplaceBar;
-    private final JFileChooser fileChooser = new JFileChooser();
+    private JFileChooser fileChooser;
 
     /**
      * Creates the main application window with menu bar and tabbed editor.
@@ -151,9 +151,16 @@ public class MainFrame extends JFrame {
         return menuBar;
     }
 
+    private JFileChooser getFileChooser() {
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+        }
+        return fileChooser;
+    }
+
     private void openFile() {
-        if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        openFile(fileChooser.getSelectedFile());
+        if (getFileChooser().showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        openFile(getFileChooser().getSelectedFile());
     }
 
     /**
@@ -193,16 +200,16 @@ public class MainFrame extends JFrame {
     private void saveCurrentFileAs() {
         EditorPane editor = tabPane.getCurrentEditor();
         if (editor == null) return;
-        if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        editor.setFile(fileChooser.getSelectedFile());
+        if (getFileChooser().showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        editor.setFile(getFileChooser().getSelectedFile());
         saveEditor(editor);
     }
 
     private void saveEditor(EditorPane editor) {
         File file = editor.getFile();
         if (file == null) {
-            if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
-            file = fileChooser.getSelectedFile();
+            if (getFileChooser().showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+            file = getFileChooser().getSelectedFile();
             editor.setFile(file);
         }
         File targetFile = file;
