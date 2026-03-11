@@ -15,6 +15,11 @@ build/
 Thumbs.db
 desktop.ini
 
+# Project-internal
+CLAUDE.md
+docs/plans/
+.claude/
+
 # Runtime
 *.class
 *.jar
