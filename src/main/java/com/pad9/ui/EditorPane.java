@@ -47,7 +47,25 @@ public class EditorPane extends JPanel {
         }
 
         textArea.setFont(FontUtil.getEditorFont(14));
+
+        ColumnSelectCaret columnCaret = new ColumnSelectCaret();
+        textArea.setCaret(columnCaret);
         textArea.setCaretStyle(RSyntaxTextArea.INSERT_MODE, CaretStyle.VERTICAL_LINE_STYLE);
+
+        // Override copy to support rectangular selection
+        ActionMap am = textArea.getActionMap();
+        var defaultCopy = am.get("copy");
+        am.put("copy", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (columnCaret.hasRectangularSelection()) {
+                    java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+                            new java.awt.datatransfer.StringSelection(columnCaret.getRectangularText()), null);
+                } else {
+                    defaultCopy.actionPerformed(e);
+                }
+            }
+        });
 
         scrollPane = new RTextScrollPane(textArea);
         scrollPane.setLineNumbersEnabled(true);
