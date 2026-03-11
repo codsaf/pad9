@@ -66,7 +66,7 @@ jobs:
           retention-days: 30
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -86,8 +86,19 @@ jobs:
             tar -czf "${name}.tar.gz" -C "$dir" .
           done
 
-      - name: Create Release
+      - name: Release (tagged version)
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*.tar.gz
           generate_release_notes: true
+
+      - name: Release (latest)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Build
+          prerelease: true
+          files: artifacts/*.tar.gz
+          body: "Automated build from main branch (${{ github.sha }})"
