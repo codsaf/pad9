@@ -50,9 +50,12 @@ tasks.register("packageDist") {
         inputDir.deleteRecursively()
         runtimeDir.deleteRecursively()
         File(destDir, "Pad9").deleteRecursively()
+        File(destDir, "Pad9.app").deleteRecursively()
         inputDir.mkdirs()
 
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
+        val osName = System.getProperty("os.name").lowercase()
+        val isWindows = osName.contains("win")
+        val isMac = osName.contains("mac")
         val binExt = if (isWindows) ".exe" else ""
 
         // Step 1: jlink — create minimal JRE
@@ -81,7 +84,7 @@ tasks.register("packageDist") {
         // Step 2: jpackage — create app image with native .exe launcher
         val jarName = tasks.named<Jar>("jar").get().archiveFileName.get()
         val iconResDir = project.file("src/main/resources/icons")
-        val iconExt = if (isWindows) "ico" else "png"
+        val iconExt = if (isWindows) "ico" else if (isMac) "icns" else "png"
         val iconFile = File(iconResDir, "icon.$iconExt")
         val jpackageArgs = mutableListOf(
             File(javaHome, "bin/jpackage$binExt").absolutePath,
