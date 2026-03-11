@@ -99,6 +99,5 @@ jobs:
         with:
           tag_name: latest
           name: Latest Build
-          prerelease: true
           files: artifacts/*.tar.gz
           body: "Automated build from main branch (${{ github.sha }})"
