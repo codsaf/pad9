@@ -15,10 +15,13 @@ jobs:
         include:
           - os: macos-14
             label: macos-arm64
+            artifact-path: build/dist/Pad9.app
           - os: windows-latest
             label: windows-x64
+            artifact-path: build/dist/Pad9
           - os: ubuntu-latest
             label: linux-x64
+            artifact-path: build/dist/Pad9
     runs-on: ${{ matrix.os }}
     name: Build (${{ matrix.label }})
 
@@ -41,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Pad9-${{ matrix.label }}
-          path: build/dist/Pad9/
+          path: ${{ matrix.artifact-path }}
           retention-days: 30
 
   release:
