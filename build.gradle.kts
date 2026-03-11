@@ -111,7 +111,7 @@ tasks.register("packageDist") {
         inputDir.deleteRecursively()
         runtimeDir.deleteRecursively()
 
-        val appDir = File(destDir, "Pad9")
+        val appDir = if (isMac) File(destDir, "Pad9.app") else File(destDir, "Pad9")
         val totalSize = appDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
         println("App image: ${appDir.absolutePath}")
         println("Total size: ${totalSize / 1024 / 1024} MB")

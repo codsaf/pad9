@@ -7,10 +7,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -25,10 +22,14 @@ import java.util.List;
  */
 public class MainFrame extends JFrame {
 
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting().disableHtmlEscaping().create();
+
     private final EditorTabPane tabPane;
     private final StatusBar statusBar;
     private final SearchReplaceBar searchReplaceBar;
     private JFileChooser fileChooser;
+    private javax.swing.event.CaretListener currentCaretListener;
 
     /**
      * Creates the main application window with menu bar and tabbed editor.
@@ -172,8 +173,7 @@ public class MainFrame extends JFrame {
         int[] sizes = {16, 32, 48, 128, 256};
         List<Image> icons = new ArrayList<>();
         for (int s : sizes) {
-            try {
-                var stream = getClass().getResourceAsStream("/icons/icon-" + s + ".png");
+            try (var stream = getClass().getResourceAsStream("/icons/icon-" + s + ".png")) {
                 if (stream != null) icons.add(ImageIO.read(stream));
             } catch (IOException ignored) {}
         }
@@ -185,8 +185,7 @@ public class MainFrame extends JFrame {
         if (editor == null) return;
         String text = editor.getTextArea().getText();
         try {
-            Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-            String formatted = gson.toJson(JsonParser.parseString(text));
+            String formatted = GSON.toJson(JsonParser.parseString(text));
             editor.getTextArea().beginAtomicEdit();
             try {
                 editor.getTextArea().setText(formatted);
@@ -316,11 +315,18 @@ public class MainFrame extends JFrame {
     }
 
     private void wireStatusBar(EditorPane editor) {
-        editor.getTextArea().addCaretListener(e -> {
+        if (currentCaretListener != null) {
+            EditorPane prev = tabPane.getCurrentEditor();
+            if (prev != null) {
+                prev.getTextArea().removeCaretListener(currentCaretListener);
+            }
+        }
+        currentCaretListener = e -> {
             int line = editor.getTextArea().getCaretLineNumber() + 1;
             int col = editor.getTextArea().getCaretOffsetFromLineStart() + 1;
             statusBar.updatePosition(line, col);
-        });
+        };
+        editor.getTextArea().addCaretListener(currentCaretListener);
         statusBar.updateEncoding(editor.getCharset().displayName());
         statusBar.updateLanguage(editor.getLanguageName());
         statusBar.updateFileSize(editor.getFile());

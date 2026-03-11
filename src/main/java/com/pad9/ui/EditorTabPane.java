@@ -16,8 +16,6 @@ public class EditorTabPane extends JTabbedPane {
     public EditorTabPane() {
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
-        JPanel addPanel = new JPanel(new BorderLayout());
-        addPanel.setOpaque(false);
         JButton addButton = new JButton("+");
         addButton.setFont(addButton.getFont().deriveFont(Font.BOLD, 16f));
         addButton.setBorderPainted(false);
@@ -26,9 +24,8 @@ public class EditorTabPane extends JTabbedPane {
         addButton.setMargin(new Insets(0, 6, 0, 6));
         addButton.setToolTipText("New Tab");
         addButton.addActionListener(e -> addNewTab());
-        addPanel.add(addButton);
 
-        putClientProperty("JTabbedPane.trailingComponent", addPanel);
+        putClientProperty("JTabbedPane.trailingComponent", addButton);
     }
 
     /**

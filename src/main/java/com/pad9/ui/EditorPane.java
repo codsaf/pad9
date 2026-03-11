@@ -12,6 +12,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -57,10 +59,10 @@ public class EditorPane extends JPanel {
         var defaultCopy = am.get("copy");
         am.put("copy", new AbstractAction() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 if (columnCaret.hasRectangularSelection()) {
-                    java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
-                            new java.awt.datatransfer.StringSelection(columnCaret.getRectangularText()), null);
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+                            new StringSelection(columnCaret.getRectangularText()), null);
                 } else {
                     defaultCopy.actionPerformed(e);
                 }
@@ -73,9 +75,9 @@ public class EditorPane extends JPanel {
 
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { markModified(); }
+            public void insertUpdate(DocumentEvent e) { columnCaret.clearColumnSelection(); markModified(); }
             @Override
-            public void removeUpdate(DocumentEvent e) { markModified(); }
+            public void removeUpdate(DocumentEvent e) { columnCaret.clearColumnSelection(); markModified(); }
             @Override
             public void changedUpdate(DocumentEvent e) {}
         });
